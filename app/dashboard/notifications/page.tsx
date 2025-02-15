@@ -35,15 +35,27 @@ import {
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState(mockNotifications)
-  const [searchTerm, setSearchTerm] = useState("")
   const [selectedTab, setSelectedTab] = useState("all")
+  const [searchTerm, setSearchTerm] = useState("")
   const [showDialog, setShowDialog] = useState(false)
   const [selectedMessage, setSelectedMessage] = useState<any>(null)
 
-  const unreadCount = notifications.filter(n => !n.read).length
-  const errorCount = notifications.filter(n => n.type === "error").length
-  const warningCount = notifications.filter(n => n.type === "warning").length
-  const successCount = notifications.filter(n => n.type === "success").length
+  // 统计数据
+  const stats = {
+    unread: notifications.filter(n => !n.read).length,
+    error: notifications.filter(n => n.type === "error").length,
+    warning: notifications.filter(n => n.type === "warning").length,
+    message: notifications.filter(n => n.type === "message").length
+  }
+
+  // 定期刷新通知
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNotifications([...mockNotifications])
+    }, 30000) // 每30秒刷新一次
+
+    return () => clearInterval(interval)
+  }, [])
 
   // 过滤通知
   const filteredNotifications = notifications.filter(notification => {
@@ -120,24 +132,33 @@ export default function NotificationsPage() {
 
       {/* 统计卡片 */}
       <div className="grid gap-4 md:grid-cols-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Card className="relative overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-r from-transparent via-blue-500/5 to-blue-500/10" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">未读通知</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center">
-                <BellRing className="h-4 w-4 text-blue-500" />
+        <Card className="bg-blue-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-blue-500 rounded-full">
+                <BellRing className="h-4 w-4 text-white" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{unreadCount}</div>
-            </CardContent>
-          </Card>
-        </motion.div>
+              <div>
+                <p className="text-sm font-medium">未读通知</p>
+                <p className="text-2xl font-bold">{stats.unread}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-purple-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-purple-500 rounded-full">
+                <MessageSquare className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">新留言</p>
+                <p className="text-2xl font-bold">{stats.message}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -153,7 +174,7 @@ export default function NotificationsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{errorCount}</div>
+              <div className="text-2xl font-bold text-red-600">{stats.error}</div>
             </CardContent>
           </Card>
         </motion.div>
@@ -172,26 +193,7 @@ export default function NotificationsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{warningCount}</div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <Card className="relative overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-r from-transparent via-green-500/5 to-green-500/10" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">成功通知</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-green-50 flex items-center justify-center">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{successCount}</div>
+              <div className="text-2xl font-bold text-yellow-600">{stats.warning}</div>
             </CardContent>
           </Card>
         </motion.div>
@@ -216,7 +218,7 @@ export default function NotificationsPage() {
             </TabsTrigger>
             <TabsTrigger value="unread" className="flex items-center gap-2">
               <BellRing className="h-4 w-4" />
-              未读 ({unreadCount})
+              未读 ({stats.unread})
             </TabsTrigger>
             <TabsTrigger value="read" className="flex items-center gap-2">
               <BellOff className="h-4 w-4" />
@@ -248,6 +250,7 @@ export default function NotificationsPage() {
                     key={notification.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
                     transition={{ delay: index * 0.1 }}
                   >
                     <Card className={cn(
