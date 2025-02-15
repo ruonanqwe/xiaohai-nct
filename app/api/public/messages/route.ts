@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import type { Message, MessageResponse } from '@/types/message'
 import { MessageFilter } from '@/lib/message-filter'
 import { z } from 'zod'
+import { mockNotifications } from '@/data/mock/notifications'
 
 // 验证模式
 const messageSchema = z.object({
@@ -10,6 +11,9 @@ const messageSchema = z.object({
   email: z.string().email("请输入有效的邮箱地址"),
   content: z.string().min(5, "留言内容至少5个字符").max(500, "留言内容不能超过500个字符")
 })
+
+// 存储留言的数组
+let messages: Message[] = []
 
 // 接收留言
 export async function POST(request: NextRequest) {
@@ -61,33 +65,75 @@ export async function POST(request: NextRequest) {
     
     // 构造留言数据
     const message: Message = {
+      id: String(Date.now()),
       ...validationResult.data,
       createdAt: new Date().toISOString(),
       status: 'pending'
     }
-    
-    // 转发到您的后端 API
-    const res = await fetch('https://xiaohai-nct.netlify.app/api/public/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(message)
-    })
-    
-    const data: MessageResponse = await res.json()
-    
-    if (!res.ok) {
-      throw new Error(data.message || '留言提交失败')
+
+    // 保存留言
+    messages.unshift(message)
+
+    // 创建通知
+    const notification = {
+      id: String(Date.now()),
+      title: "新留言提醒",
+      content: `收到来自 ${message.name} 的新留言`,
+      type: "message" as const,
+      timestamp: new Date().toISOString(),
+      read: false,
+      messageData: {
+        name: message.name,
+        email: message.email,
+        content: message.content
+      }
     }
+
+    // 添加到通知列表
+    mockNotifications.unshift(notification)
     
-    return NextResponse.json(data)
+    return NextResponse.json({
+      code: 200,
+      data: message,
+      message: "留言提交成功"
+    })
 
   } catch (error) {
     console.error('留言提交错误:', error)
     return NextResponse.json({
       code: 500,
       message: "留言提交失败",
+      error: error instanceof Error ? error.message : "未知错误"
+    }, { status: 500 })
+  }
+}
+
+// 获取留言列表
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const status = searchParams.get('status')
+    const limit = parseInt(searchParams.get('limit') || '10')
+    
+    let filteredMessages = [...messages]
+    
+    // 根据状态筛选
+    if (status) {
+      filteredMessages = filteredMessages.filter(m => m.status === status)
+    }
+    
+    // 限制返回数量
+    filteredMessages = filteredMessages.slice(0, limit)
+    
+    return NextResponse.json({
+      code: 200,
+      data: filteredMessages,
+      message: "获取成功"
+    })
+  } catch (error) {
+    return NextResponse.json({
+      code: 500,
+      message: "获取留言失败",
       error: error instanceof Error ? error.message : "未知错误"
     }, { status: 500 })
   }
