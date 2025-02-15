@@ -46,6 +46,19 @@ export const mockNotifications: Notification[] = [
     type: "error",
     timestamp: "2025-02-10 09:20",
     read: true,
+  },
+  {
+    id: "5",
+    title: "新留言提醒",
+    content: "收到来自张三的新留言",
+    type: "message",
+    timestamp: "2024-03-19 15:30",
+    read: false,
+    messageData: {
+      name: "张三",
+      email: "zhangsan@example.com",
+      content: "这是一条测试留言内容"
+    }
   }
 ]
 
