@@ -311,10 +311,17 @@ export default function NotificationsPage() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  查看详情
-                                </DropdownMenuItem>
+                                {notification.type === "message" && notification.messageData ? (
+                                  <DropdownMenuItem onClick={() => handleViewMessage(notification)}>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    查看留言详情
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    查看详情
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem>
                                   <Clock className="h-4 w-4 mr-2" />
                                   稍后提醒
@@ -328,6 +335,17 @@ export default function NotificationsPage() {
                         <p className="text-gray-600">
                           {notification.content}
                         </p>
+                        {notification.type === "message" && notification.messageData && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="mt-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                            onClick={() => handleViewMessage(notification)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            查看留言详情
+                          </Button>
+                        )}
                       </CardContent>
                     </Card>
                   </motion.div>
