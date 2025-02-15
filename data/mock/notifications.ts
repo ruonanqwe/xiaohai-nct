@@ -2,11 +2,16 @@ export interface Notification {
   id: string
   title: string
   content: string
-  type: "info" | "warning" | "success" | "error"
+  type: "info" | "warning" | "success" | "error" | "message"
   timestamp: string
   read: boolean
   icon?: string
   link?: string
+  messageData?: {
+    name: string
+    email: string
+    content: string
+  }
 }
 
 export const mockNotifications: Notification[] = [
@@ -68,5 +73,11 @@ export const notificationTypes = {
     color: "bg-red-500",
     icon: "AlertOctagon",
     badge: "bg-red-100 text-red-700"
+  },
+  message: {
+    label: "新留言",
+    color: "bg-purple-500",
+    icon: "MessageSquare",
+    badge: "bg-purple-100 text-purple-700"
   }
 } as const 
