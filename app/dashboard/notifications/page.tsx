@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +14,7 @@ import { mockNotifications, notificationTypes } from "@/data/mock/notifications"
 import { 
   Bell, Info, AlertTriangle, CheckCircle, AlertOctagon,
   Clock, Eye, Trash2, MoreVertical, Filter, Search,
-  BellRing, BellOff, RefreshCcw
+  BellRing, BellOff, RefreshCcw, MessageSquare
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
@@ -23,11 +23,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Label
+} from "@/components/ui/label"
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState(mockNotifications)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedTab, setSelectedTab] = useState("all")
+  const [showDialog, setShowDialog] = useState(false)
+  const [selectedMessage, setSelectedMessage] = useState<any>(null)
 
   const unreadCount = notifications.filter(n => !n.read).length
   const errorCount = notifications.filter(n => n.type === "error").length
@@ -47,6 +58,32 @@ export default function NotificationsPage() {
 
     return matchesSearch && matchesTab
   })
+
+  // 处理留言查看
+  const handleViewMessage = (notification: any) => {
+    if (notification.type === 'message' && notification.messageData) {
+      setSelectedMessage(notification.messageData)
+      setShowDialog(true)
+    }
+  }
+
+  // 获取图标组件
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'message':
+        return MessageSquare
+      case 'info':
+        return Info
+      case 'warning':
+        return AlertTriangle
+      case 'success':
+        return CheckCircle
+      case 'error':
+        return AlertOctagon
+      default:
+        return Bell
+    }
+  }
 
   return (
     <div className="space-y-6 p-6 min-h-screen bg-gray-50">
@@ -204,12 +241,7 @@ export default function NotificationsPage() {
             ) : (
               filteredNotifications.map((notification, index) => {
                 const type = notificationTypes[notification.type]
-                const Icon = {
-                  Info,
-                  AlertTriangle,
-                  CheckCircle,
-                  AlertOctagon
-                }[type.icon]
+                const Icon = getIcon(notification.type)
 
                 return (
                   <motion.div
@@ -302,6 +334,31 @@ export default function NotificationsPage() {
           </div>
         </AnimatePresence>
       </ScrollArea>
+
+      {/* 留言详情对话框 */}
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>留言详情</DialogTitle>
+          </DialogHeader>
+          {selectedMessage && (
+            <div className="space-y-4">
+              <div>
+                <Label>留言人</Label>
+                <p>{selectedMessage.name}</p>
+              </div>
+              <div>
+                <Label>邮箱</Label>
+                <p>{selectedMessage.email}</p>
+              </div>
+              <div>
+                <Label>留言内容</Label>
+                <p className="whitespace-pre-wrap">{selectedMessage.content}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
